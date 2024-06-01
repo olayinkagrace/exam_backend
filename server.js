@@ -98,6 +98,7 @@ app.get("/users", async (req, res) => {
 
     const numberedUsers = users.map((user, index) => ({
       number: index + 1,
+      id:user._id,
       name: user.name,
       email: user.email,
       password: user.password,
