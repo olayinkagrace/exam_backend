@@ -65,7 +65,7 @@ app.post('/login', async (req, res) => {
         return res.status(403).json({ error: 'You have already taken the test' });
       }
     } else {
-      res.status(400).json({ error: 'Invalid credentials' });
+      res.status(400).json({ error: 'Invalid credentials backend' });
     }
   } catch (error) {
     console.error('Error during login:', error);
