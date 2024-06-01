@@ -59,10 +59,10 @@ app.post('/login', async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (user && user.password === password) {
-      if (user.score !== 0) {
+      if (user.score == 0) {
+        return res.status(200).json({ message : 'Login successful ' });
+      } if (user.score > 0) {
         return res.status(403).json({ error: 'You have already taken the test' });
-      } else {
-        return res.status(200).json({ message: 'Login successful' });
       }
     } else {
       res.status(400).json({ error: 'Invalid credentials' });
