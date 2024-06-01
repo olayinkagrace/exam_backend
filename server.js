@@ -61,7 +61,7 @@ app.post('/login', async (req, res) => {
     if (user && user.password === password) {
       if (user.score == 0) {
         return res.status(200).json({ message : 'Login successful ' });
-      } if (user.score > 0) {
+      } else if (user.score > 0) {
         return res.status(403).json({ error: 'You have already taken the test' });
       }
     } else {
