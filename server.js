@@ -60,7 +60,7 @@ app.post('/login', async (req, res) => {
     const user = await User.findOne({ email });
     if (user && user.password === password) {
       if (user.score !== null) {
-        return res.status(200).json({ message: 'Login successful, you have already done the test', score: user.score });
+        return res.status(403).json({ error: 'You have already taken the test' });
       } else {
         return res.status(200).json({ message: 'Login successful' });
       }
