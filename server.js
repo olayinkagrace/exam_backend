@@ -59,19 +59,20 @@ app.post('/login', async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (user && user.password === password) {
-      if (user.score == 0) {
-        return res.status(200).json({ message : 'Login successful ' });
+      if (user.score === 0) {
+        return res.status(200).json({ message: 'Login successful' });
       } else if (user.score !== 0) {
         return res.status(403).json({ error: 'You have already taken the test' });
       }
     } else {
-      res.status(400).json({ error: 'Invalid credentials backend' });
+      return res.status(400).json({ error: 'Invalid credentials' });
     }
   } catch (error) {
     console.error('Error during login:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
+
 
 app.post('/submit', async (req, res) => {
   const { email, score } = req.body;
