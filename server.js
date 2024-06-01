@@ -18,8 +18,7 @@ const uri = process.env.MONGODB_URI;
 mongoose
   .connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
-    app.listen(process.env.PORT, () => {
-    });
+    app.listen(process.env.PORT, () => {});
   })
   .catch((error) => {
     console.error("Error connecting to MongoDB:", error);
@@ -88,17 +87,16 @@ app.post("/submit", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
 app.get("/users", async (req, res) => {
   try {
     const users = await User.find(
       {},
-      { name: 1, email: 1, password: 1, score: 1, _id: 0 }
+      { name: 1, email: 1, password: 1, score: 1, _id: 1 } // Include _id
     );
 
     const numberedUsers = users.map((user, index) => ({
       number: index + 1,
-      id:user._id,
+      id: user._id, // Include _id in the response
       name: user.name,
       email: user.email,
       password: user.password,
@@ -117,17 +115,16 @@ app.delete("/userDelete/:id", async (req, res) => {
   const userId = req.params.id;
   try {
     const user = await User.findByIdAndDelete(userId);
-    console.log(user)
+    console.log(user);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
     res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
     console.error("Error deleting user:", error);
-  
+
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
 
 const PORT = process.env.PORT || 5000;
