@@ -9,16 +9,14 @@ app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
-app.use((req, res, next) => {
-  next();
-});
-
 const uri = process.env.MONGODB_URI;
 
 mongoose
   .connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
-    app.listen(process.env.PORT, () => {});
+    app.listen(process.env.PORT, () => {
+      console.log(`Server running on port ${process.env.PORT}`);
+    });
   })
   .catch((error) => {
     console.error("Error connecting to MongoDB:", error);
@@ -72,11 +70,13 @@ app.post("/login", async (req, res) => {
 });
 
 app.post("/submit", async (req, res) => {
-  const { email, score } = req.body;
+  const { email, scores } = req.body;
+  const totalScore = scores.reduce((acc, score) => acc + score, 0);
+
   try {
     const user = await User.findOne({ email });
     if (user) {
-      user.score = score;
+      user.score = totalScore;
       await user.save();
       res.status(200).json({ message: "Score submitted" });
     } else {
@@ -87,6 +87,7 @@ app.post("/submit", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
 app.get("/users", async (req, res) => {
   try {
     const users = await User.find(
@@ -115,7 +116,6 @@ app.delete("/userDelete/:id", async (req, res) => {
   const userId = req.params.id;
   try {
     const user = await User.findByIdAndDelete(userId);
-    console.log(user);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
