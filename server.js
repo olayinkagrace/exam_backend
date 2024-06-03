@@ -22,12 +22,18 @@ mongoose
     console.error("Error connecting to MongoDB:", error);
   });
 
-const userSchema = new mongoose.Schema({
-  name: { type: String, required: true, unique: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  score: { type: Number, default: 0 },
-});
+  const userSchema = new mongoose.Schema({
+    name: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    scores: [
+      {
+        title: { type: String, required: true },
+        score: { type: Number, required: true },
+      },
+    ],
+  });
+  
 
 const User = mongoose.model("User", userSchema);
 
@@ -68,15 +74,13 @@ app.post("/login", async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 });
-
 app.post("/submit", async (req, res) => {
   const { email, scores } = req.body;
-  const totalScore = scores.reduce((acc, score) => acc + score, 0);
 
   try {
     const user = await User.findOne({ email });
     if (user) {
-      user.score = totalScore;
+      user.scores = scores;
       await user.save();
       res.status(200).json({ message: "Score submitted" });
     } else {
@@ -87,6 +91,7 @@ app.post("/submit", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
 
 app.get("/users", async (req, res) => {
   try {
