@@ -22,18 +22,17 @@ mongoose
     console.error("Error connecting to MongoDB:", error);
   });
 
-  const userSchema = new mongoose.Schema({
-    name: { type: String, required: true, unique: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    scores: [
-      {
-        title: { type: String, required: true },
-        score: { type: Number, required: true },
-      },
-    ],
-  });
-  
+const userSchema = new mongoose.Schema({
+  name: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  scores: [
+    {
+      title: { type: String, required: true },
+      score: { type: Number, required: true },
+    },
+  ],
+});
 
 const User = mongoose.model("User", userSchema);
 
@@ -45,7 +44,7 @@ app.post("/signup", async (req, res) => {
     if (existingUserByName || existingUserByEmail) {
       return res.status(400).json({ error: "User already exists" });
     }
-    const newUser = new User({ name, email, password });
+    const newUser = new User({ name, email, password, scores: [] });
     await newUser.save();
     res.status(200).json({ message: "Signup successful" });
   } catch (error) {
@@ -59,9 +58,9 @@ app.post("/login", async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (user && user.password === password) {
-      if (user.score === 0) {
+      if (user.scores.length === 0) {
         return res.status(200).json({ message: "Login successful" });
-      } else if (user.score !== 0) {
+      } else {
         return res
           .status(403)
           .json({ error: "You have already taken the test" });
@@ -74,6 +73,7 @@ app.post("/login", async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 });
+
 app.post("/submit", async (req, res) => {
   const { email, scores } = req.body;
 
@@ -92,31 +92,16 @@ app.post("/submit", async (req, res) => {
   }
 });
 
-
 app.get("/users", async (req, res) => {
   try {
-    const users = await User.find(
-      {},
-      { name: 1, email: 1, password: 1, score: 1, _id: 1 } // Include _id
-    );
-
-    const numberedUsers = users.map((user, index) => ({
-      number: index + 1,
-      id: user._id, // Include _id in the response
-      name: user.name,
-      email: user.email,
-      password: user.password,
-      score: user.score,
-    }));
-
-    res.status(200).json(numberedUsers);
+    const users = await User.find({}, { password: 0 }); // Exclude password field from response
+    res.status(200).json(users);
   } catch (error) {
     console.error("Error fetching users:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
-// Add this route after the "/users" route
 app.delete("/userDelete/:id", async (req, res) => {
   const userId = req.params.id;
   try {
@@ -127,7 +112,6 @@ app.delete("/userDelete/:id", async (req, res) => {
     res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
     console.error("Error deleting user:", error);
-
     res.status(500).json({ error: "Internal server error" });
   }
 });
