@@ -9,16 +9,14 @@ app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
-app.use((req, res, next) => {
-  next();
-});
-
 const uri = process.env.MONGODB_URI;
 
 mongoose
   .connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
-    app.listen(process.env.PORT, () => {});
+    app.listen(process.env.PORT, () => {
+      console.log(`Server running on port ${process.env.PORT}`);
+    });
   })
   .catch((error) => {
     console.error("Error connecting to MongoDB:", error);
@@ -28,7 +26,12 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  score: { type: Number, default: 0 },
+  scores: [
+    {
+      title: { type: String, required: true },
+      score: { type: Number, required: true },
+    },
+  ],
 });
 
 const User = mongoose.model("User", userSchema);
@@ -72,11 +75,12 @@ app.post("/login", async (req, res) => {
 });
 
 app.post("/submit", async (req, res) => {
-  const { email, score } = req.body;
+  const { email, scores } = req.body;
+
   try {
     const user = await User.findOne({ email });
     if (user) {
-      user.score = score;
+      user.scores = scores;
       await user.save();
       res.status(200).json({ message: "Score submitted" });
     } else {
@@ -87,42 +91,30 @@ app.post("/submit", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
 app.get("/users", async (req, res) => {
   try {
     const users = await User.find(
       {},
-      { name: 1, email: 1, password: 1, score: 1, _id: 1 } // Include _id
+      { name: 1, email: 1, password: 1, _id: 1 } // Include _id, name, email, and password
     );
-
-    const numberedUsers = users.map((user, index) => ({
-      number: index + 1,
-      id: user._id, // Include _id in the response
-      name: user.name,
-      email: user.email,
-      password: user.password,
-      score: user.score,
-    }));
-
-    res.status(200).json(numberedUsers);
+    res.status(200).json(users);
   } catch (error) {
     console.error("Error fetching users:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
-// Add this route after the "/users" route
 app.delete("/userDelete/:id", async (req, res) => {
   const userId = req.params.id;
   try {
     const user = await User.findByIdAndDelete(userId);
-    console.log(user);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
     res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
     console.error("Error deleting user:", error);
-
     res.status(500).json({ error: "Internal server error" });
   }
 });
