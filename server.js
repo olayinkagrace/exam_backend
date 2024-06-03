@@ -44,7 +44,7 @@ app.post("/signup", async (req, res) => {
     if (existingUserByName || existingUserByEmail) {
       return res.status(400).json({ error: "User already exists" });
     }
-    const newUser = new User({ name, email, password, scores: [] });
+    const newUser = new User({ name, email, password });
     await newUser.save();
     res.status(200).json({ message: "Signup successful" });
   } catch (error) {
@@ -58,9 +58,9 @@ app.post("/login", async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (user && user.password === password) {
-      if (user.scores.length === 0) {
+      if (user.score === 0) {
         return res.status(200).json({ message: "Login successful" });
-      } else {
+      } else if (user.score !== 0) {
         return res
           .status(403)
           .json({ error: "You have already taken the test" });
@@ -94,7 +94,10 @@ app.post("/submit", async (req, res) => {
 
 app.get("/users", async (req, res) => {
   try {
-    const users = await User.find({}, { password: 0 }); // Exclude password field from response
+    const users = await User.find(
+      {},
+      { name: 1, email: 1, password: 1, _id: 1 } // Include _id, name, email, and password
+    );
     res.status(200).json(users);
   } catch (error) {
     console.error("Error fetching users:", error);
