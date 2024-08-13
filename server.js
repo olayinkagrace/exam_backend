@@ -48,7 +48,7 @@ app.post("/signup", async (req, res) => {
     await newUser.save();
     res.status(200).json({ message: "Signup successful" });
   } catch (error) {
-    console.error("Error during signup:", error);
+    console.error("Error during signup:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -61,19 +61,27 @@ app.post("/login", async (req, res) => {
       if (user.scores.length === 0) {
         return res.status(200).json({ message: "Login successful" });
       } else {
-        return res.status(403).json({ error: "You have already taken the test" });
+        return res
+          .status(403)
+          .json({ error: "You have already taken the test" });
       }
     } else {
       return res.status(400).json({ error: "Invalid credentials" });
     }
   } catch (error) {
-    console.error("Error during login:", error);
+    console.error("Error during login:", error.message);
     return res.status(500).json({ error: "Internal server error" });
   }
 });
 
 app.post("/submit", async (req, res) => {
   const { email, scores } = req.body;
+
+  // Validate input
+  if (!email || !Array.isArray(scores)) {
+    return res.status(400).json({ error: "Invalid request format" });
+  }
+
   try {
     const user = await User.findOne({ email });
     if (user) {
@@ -84,17 +92,20 @@ app.post("/submit", async (req, res) => {
       res.status(400).json({ error: "User not found" });
     }
   } catch (error) {
-    console.error("Error during score submission:", error);
+    console.error("Error during score submission:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
 app.get("/users", async (req, res) => {
   try {
-    const users = await User.find({}, { name: 1, email: 1, password: 1, scores: 1, _id: 1 });
+    const users = await User.find(
+      {},
+      { name: 1, email: 1, password: 1, scores: 1, _id: 1 }
+    );
     res.status(200).json(users);
   } catch (error) {
-    console.error("Error fetching users:", error);
+    console.error("Error fetching users:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -108,9 +119,12 @@ app.delete("/userDelete/:id", async (req, res) => {
     }
     res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
-    console.error("Error deleting user:", error);
+    console.error("Error deleting user:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
 const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
